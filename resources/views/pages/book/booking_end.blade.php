@@ -98,9 +98,16 @@
                                             <td class="text-center">&#x20A6;{{number_format($bookingPaymentInfo['daily_rental_rate_amount'],2)}}</td>
                                         @else
                                             <td class="text-center">&#x20A6;{{number_format(($bookingPaymentInfo['daily_rental_rate_amount']/ ($bookingPaymentInfo['duration'] - 1)),2)}}</td>
-                                        @endif                                    @else
-                                        <td class="text-center">{{$bookingPaymentInfo['duration']}} day(s)</td>
-                                        <td class="text-center">&#x20A6;{{number_format(($bookingPaymentInfo['daily_rental_rate_amount'] / $bookingPaymentInfo['duration']),2)}}</td>
+                                        @endif
+                                    @else
+                                        @if($bookingPaymentInfo['duration'] > 1)
+                                            <td class="text-center">{{$bookingPaymentInfo['duration']}} <small>({{$bookingPaymentInfo['duration'] - 1}})</small> day(s)</td>
+                                            <td class="text-center">&#x20A6;{{number_format(($bookingPaymentInfo['daily_rental_rate_amount'] / ($bookingPaymentInfo['duration'] - 1)),2)}}</td>
+                                            @else
+                                            <td class="text-center">{{$bookingPaymentInfo['duration']}} <small>({{$bookingPaymentInfo['duration'] - 1}})</small> day(s)</td>
+                                            <td class="text-center">&#x20A6;{{number_format(($bookingPaymentInfo['daily_rental_rate_amount'] / $bookingPaymentInfo['duration']),2)}}</td>
+                                            @endif
+
                                     @endif
                                     <td class="text-right">&#x20A6;{{number_format($bookingPaymentInfo['daily_rental_rate_amount'],2)}}</td>
                                 </tr>

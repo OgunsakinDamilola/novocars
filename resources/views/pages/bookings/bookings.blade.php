@@ -39,7 +39,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach(\App\Booking::where('user_id',auth()->user()->id)->get() as $serial => $booking)
+                            @foreach(\App\Booking::where('user_id',auth()->user()->id)->orderBy('id','desc')->get() as $serial => $booking)
                                 <tr>
                                     <td>{{$booking->id}}</td>
                                     <td>{{\App\VehicleType::find($booking->vehicle_type_id)->name}}</td>
@@ -104,7 +104,7 @@
                             <thead>
                             <tr>
                                 <th>Booking #</th>
-                                <th>User Info</th>
+                                <th>Customer</th>
                                 <th>Vehicle </th>
                                 <th>Start Date</th>
                                 <th>End Date</th>
@@ -117,7 +117,7 @@
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach(\App\Booking::all() as $serial => $booking)
+                            @foreach(\App\Booking::orderBy('id','desc')->get() as $serial => $booking)
                                 <tr>
                                     <td>{{$booking->id}}</td>
                                     <td>{{\App\User::find($booking->user_id)->first_name}} {{\App\User::find($booking->user_id)->middle_name }} {{\App\User::find($booking->user_id)->last_name }}</td>

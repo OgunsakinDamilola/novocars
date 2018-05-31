@@ -76,7 +76,6 @@ Route::group(['prefix' => 'settings', 'middleware' => 'role:admin'],function(){
     Route::get('/deactivate/inter/state/booking/{id}','SettingsController@deActivateInterStateBooking');
     Route::get('/get/inter/state/booking/{id}','SettingsController@getInterStateBooking');
 
-
 });
 
 

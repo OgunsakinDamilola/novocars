@@ -43,7 +43,7 @@ class BookingsController extends Controller
 
     public function submitBooking(Request $r){
 
-             if(auth()->guest()){
+           if(auth()->guest()){
                  if (Auth::attempt([
                      'email'    => $r->login_email,
                      'password' => $r->login_password
@@ -58,6 +58,7 @@ class BookingsController extends Controller
                      return redirect(url('/book'));
                  }
              }
+
            $save = Booking::store($r->toArray());
 
            $driver_outstation_allowance = 0;
@@ -69,42 +70,51 @@ class BookingsController extends Controller
            $find_discount = BookingDiscount::where('days',$duration)
                ->where('status',1)
                ->first();
+
            if(!is_null($find_discount) || !empty($find_discount)){
                $discount = $find_discount->value;
            }
-           $daily_rental_rate_amount = 0;
+
+            $daily_rental_rate_amount = 0;
+
             $daily_rental_rates = DailyRentalRate::where('vehicle_type_id',$vehicle_type)->first();
             if(($save->within_lagos_metro == 1) && ($save->fuel == 1) ){
                 $daily_rental_rate = $daily_rental_rates->daily_rental_within_lagos_metropolis_with_fuel;
-            }elseif(($save->within_lagos_metro == 1) && ($save->fuel == 0) ){
+            }
+            elseif(($save->within_lagos_metro == 1) && ($save->fuel == 0) ){
                 $daily_rental_rate = $daily_rental_rates->daily_rental_within_lagos_metropolis_without_fuel;
-            }elseif($save->within_lagos_metro == 0){
+            }
+            elseif($save->within_lagos_metro == 0){
                 $daily_rental_rate = $daily_rental_rates->daily_rental_outside_lagos_metropolis_without_fuel;
             }
 
+            $driver_outstation_allowance = ($duration - 1) * $driver_fee;
 
-         $driver_outstation_allowance = ($duration - 1) * $driver_fee;
-            if($save->state_id == 24){
-                $daily_rental_rate_amount = $daily_rental_rate * $duration;
-            }else{
-                $daily_rental_rate_amount = $daily_rental_rate * ($duration - 1);
-            }
-         $vehicle_state_price = 0;
+           $vehicle_state_price = 0;
            if($save->destination_state_id != 24){
                $vehicle_category = VehicleType::find($save->vehicle_type_id)->category_id;
                $vehicle_state_price = InterStateBookingRate::where('destination_state_id',$save->destination_state_id)
                    ->where('vehicle_category_id',$vehicle_category)
                    ->first()->state_rental_rate_value;
-
                if($save->use_car == 1){
                    $daily_rental_rate_amount = $daily_rental_rate * ($duration - 1);
-               }else{
+               }
+               else{
                    $daily_rental_rate_amount = 0;
+               }
+           }
+           else{
+               if($duration > 1){
+                   $vehicle_state_price = $daily_rental_rate;
+                   $daily_rental_rate_amount = $daily_rental_rates->daily_rental_within_lagos_metropolis_without_fuel * ($duration - 1);
+               }else{
+                   $vehicle_state_price = 0;
+                   $daily_rental_rate_amount = $daily_rental_rates->daily_rental_within_lagos_metropolis_without_fuel * $duration;
                }
            }
 
           $total_amount = ($driver_outstation_allowance + $vehicle_state_price + $daily_rental_rate_amount) - $discount;
-           $data = [
+          $data = [
                'driver_outstation_fee'         => $driver_outstation_allowance,
                'duration'                      => $duration,
                'vehicle_state_price'           => $vehicle_state_price,
@@ -112,13 +122,13 @@ class BookingsController extends Controller
                'discount'                      => $discount,
                'total_amount'                  => $total_amount,
                'booking_id'                    => $save->id
-           ];
-           $transaction_amount = ($total_amount * 100);
-           $redirect_url = url('/payment/confirmation');
-           $reference = str_random('6');
-           $hash = $this->InterswitchConfig->transactionHash($reference,$transaction_amount,$redirect_url,$save->id);
-           $booking_payment_information = BookingPaymentInformation::store($data);
-           $transactionInfo = [
+          ];
+          $transaction_amount = ($total_amount * 100);
+          $redirect_url = url('/payment/confirmation');
+          $reference = str_random('6');
+          $hash = $this->InterswitchConfig->transactionHash($reference,$transaction_amount,$redirect_url,$save->id);
+          $booking_payment_information = BookingPaymentInformation::store($data);
+          $transactionInfo = [
              'item_id'      => $this->InterswitchConfig->item_id,
              'product_id'   => $this->InterswitchConfig->product_id,
              'redirect_url' => $redirect_url,
@@ -127,9 +137,9 @@ class BookingsController extends Controller
              'action_url'   => $this->InterswitchConfig->requestActionUrl,
              'reference'    => $reference,
              'booking_id'   => $save->id
-           ];
-           session()->put('transactionInfo',$transactionInfo);
-           return redirect(url('/booking/information'));
+          ];
+          session()->put('transactionInfo',$transactionInfo);
+          return redirect(url('/booking/information'));
     }
 
     public function bookingInformation(){
@@ -363,6 +373,7 @@ class BookingsController extends Controller
            return 0;
        }
     }
+
     public function declineOfflinePayment(Request $r){
         $reference = $r->reference;
         $payment = OfflinePayment::where('reference',$reference)->first();
@@ -377,6 +388,5 @@ class BookingsController extends Controller
             return 0;
         }
     }
-
 
 }
